@@ -14,19 +14,43 @@ interface PaymentProps {
 const CustomerPayment: React.FC<PaymentProps> = ({ cart, onComplete, addOrder }) => {
   const navigate = useNavigate();
   const store = useStore();
-  const [selectedApp, setSelectedApp] = useState<string | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
   const total = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
 
-  // Generate the UPI URL exactly how GPay/PhonePe prefer it
+  // Generate the UPI URL with the most robust parameter order for GPay/PhonePe
   const upiUrl = useMemo(() => {
     const cleanUpiId = UPI_ID.trim();
     const orderId = `TR${Date.now()}`;
-    const amount = total.toFixed(2); // Use 2 decimal places as per UPI spec
+    const amount = total.toFixed(2);
     
-    // Format: upi://pay?pa=...&pn=...&am=...&cu=INR&tr=...&tn=...
-    // Note: Placing 'am' and 'pa' first is most reliable for GPay
-    return `upi://pay?pa=${cleanUpiId}&pn=${encodeURIComponent(BUSINESS_NAME)}&am=${amount}&cu=INR&tr=${orderId}&tn=${encodeURIComponent('StallOrder' + orderId.slice(-4))}`;
+    // Format: pa=address & pn=name & am=amount & tr=ref & tn=note & cu=currency & mode=02 (Pay to person)
+    return `upi://pay?pa=${cleanUpiId}&pn=${encodeURIComponent(BUSINESS_NAME)}&am=${amount}&tr=${orderId}&tn=${encodeURIComponent('Order' + orderId.slice(-4))}&cu=INR&mode=02`;
   }, [total]);
+
+  // Dynamic QR code URL for the same transaction
+  const paymentQR = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(upiUrl)}`;
+
+  const downloadQR = async () => {
+    setIsDownloading(true);
+    try {
+      const response = await fetch(paymentQR);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `StallEase_Payment_₹${total}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Download failed", err);
+      // Fallback: Open in new tab
+      window.open(paymentQR, '_blank');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   const sendDiscordNotification = async (order: Order) => {
     const webhook = store.discordWebhook || DISCORD_WEBHOOK_URL;
@@ -40,10 +64,10 @@ const CustomerPayment: React.FC<PaymentProps> = ({ cart, onComplete, addOrder })
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           embeds: [{
-            title: `💰 NEW PAYMENT ATTEMPT: ₹${order.totalPrice}`,
+            title: `💰 PAYMENT INITIATED: ₹${order.totalPrice}`,
             color: 16750848,
-            description: `**Items:**\n${itemsList}\n\n**App:** ${order.paymentMethod}`,
-            footer: { text: "Verify screenshot at counter" }
+            description: `**Items:**\n${itemsList}\n\n**Order ID:** ${order.id.slice(-6).toUpperCase()}`,
+            footer: { text: "Verify payment success screenshot" }
           }]
         })
       });
@@ -52,9 +76,7 @@ const CustomerPayment: React.FC<PaymentProps> = ({ cart, onComplete, addOrder })
     }
   };
 
-  const finalizeAndPay = async () => {
-    if (!selectedApp) return;
-
+  const finalizeAndRedirect = (method: string) => {
     const orderId = `ord${Date.now()}`;
     const newOrder: Order = {
       id: orderId,
@@ -62,78 +84,113 @@ const CustomerPayment: React.FC<PaymentProps> = ({ cart, onComplete, addOrder })
       totalPrice: total,
       timestamp: Date.now(),
       status: OrderStatus.PAID_PENDING_CONFIRMATION,
-      paymentMethod: selectedApp
+      paymentMethod: method
     };
 
-    // 1. Save order locally
     addOrder(newOrder);
-    
-    // 2. Clear cart
     onComplete();
-
-    // 3. Optional: Notify Discord
     sendDiscordNotification(newOrder);
 
-    // 4. Trigger the deep link
-    // Using window.location.assign is often more robust for deep links
-    window.location.assign(upiUrl);
-
-    // 5. Navigate to orders so they can see the QR when they come back
-    setTimeout(() => {
+    if (method === 'QR') {
+      // If they chose QR, we just navigate to orders where they can see the QR
       navigate('/orders');
-    }, 1000);
+    } else {
+      // Trigger intent
+      window.location.href = upiUrl;
+      setTimeout(() => navigate('/orders'), 1500);
+    }
+  };
+
+  const copyUpiId = () => {
+    navigator.clipboard.writeText(UPI_ID);
+    alert("UPI ID Copied! You can now paste it in your payment app.");
   };
 
   return (
-    <div className="max-w-xl mx-auto py-8 px-4 animate-in fade-in duration-500">
-      <div className="text-center mb-10">
-        <h1 className="text-3xl font-black text-gray-900 tracking-tighter uppercase">Payment</h1>
-        <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest mt-2">Select your app to pay ₹{total}</p>
+    <div className="max-w-xl mx-auto py-6 px-4 animate-in fade-in duration-500">
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-black text-gray-900 tracking-tighter uppercase">Pay ₹{total}</h1>
+        <p className="text-gray-400 text-[9px] font-black uppercase tracking-widest mt-2">Secure UPI Transaction</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 mb-10">
-        {[
-          { name: 'Google Pay', id: 'GPay', icon: 'fab fa-google-pay', color: 'text-blue-500' },
-          { name: 'PhonePe', id: 'PhonePe', icon: 'fas fa-mobile-alt', color: 'text-purple-600' },
-          { name: 'Paytm', id: 'Paytm', icon: 'fas fa-wallet', color: 'text-cyan-500' },
-          { name: 'Any UPI', id: 'Other', icon: 'fas fa-qrcode', color: 'text-gray-800' }
-        ].map(app => (
+      {/* OPTION 1: SMART QR (Best fallback if deep link fails) */}
+      <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-xl mb-6 text-center">
+        <div className="mb-4">
+           <span className="bg-orange-100 text-orange-600 text-[8px] font-black px-3 py-1 rounded-full uppercase tracking-widest">Recommended Way</span>
+        </div>
+        
+        <div className="bg-gray-50 p-4 rounded-3xl inline-block mb-4 border border-gray-100 relative group">
+          <img src={paymentQR} alt="Payment QR" className="w-48 h-48 mx-auto" />
+          <div className="absolute inset-0 bg-white/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-3xl">
+             <i className="fas fa-qrcode text-3xl text-gray-900"></i>
+          </div>
+        </div>
+        
+        <h3 className="text-gray-900 font-black text-xs uppercase mb-1 tracking-tight">Save & Scan</h3>
+        <p className="text-gray-400 text-[10px] font-medium leading-tight mb-6">
+          Download this QR and upload it to GPay/PhonePe scanner to lock the amount.
+        </p>
+
+        <div className="flex flex-col gap-3">
           <button 
-            key={app.id}
-            onClick={() => setSelectedApp(app.name)}
-            className={`flex flex-col items-center justify-center p-6 rounded-[2rem] border-2 transition-all active:scale-95 ${selectedApp === app.name ? 'bg-orange-600 border-orange-600 text-white shadow-xl shadow-orange-100' : 'bg-white border-gray-100 text-gray-400 hover:border-orange-200'}`}
+            onClick={downloadQR}
+            disabled={isDownloading}
+            className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg active:scale-95 transition-all flex items-center justify-center"
           >
-            <i className={`${app.icon} text-3xl mb-3 ${selectedApp === app.name ? 'text-white' : app.color}`}></i>
-            <span className="text-[10px] font-black uppercase tracking-widest">{app.name}</span>
+            {isDownloading ? <i className="fas fa-spinner fa-spin mr-2"></i> : <i className="fas fa-download mr-2"></i>}
+            {isDownloading ? 'Downloading...' : 'Save QR to Gallery'}
           </button>
-        ))}
+          
+          <button 
+            onClick={() => finalizeAndRedirect('QR')}
+            className="w-full bg-gray-900 text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg active:scale-95 transition-all"
+          >
+            I've Scanned the QR
+          </button>
+        </div>
       </div>
 
-      {selectedApp ? (
-        <div className="animate-slide-up space-y-4">
+      {/* OPTION 2: DIRECT APP BUTTONS */}
+      <div className="space-y-3 mb-8">
+        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest text-center mb-4">Or Open App Directly</p>
+        
+        <div className="grid grid-cols-2 gap-3">
           <button 
-            onClick={finalizeAndPay}
-            className="w-full bg-gray-900 text-white py-6 rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] shadow-2xl active:scale-95 transition-all flex items-center justify-center space-x-3"
+            onClick={() => finalizeAndRedirect('GPay')}
+            className="flex items-center justify-center space-x-2 bg-white border border-gray-100 p-4 rounded-2xl shadow-sm active:scale-95 transition-all hover:border-blue-200"
           >
-            <span>PROCEED WITH {selectedApp.toUpperCase()}</span>
-            <i className="fas fa-arrow-right"></i>
+            <i className="fab fa-google-pay text-2xl text-blue-500"></i>
+            <span className="text-[10px] font-black uppercase tracking-widest text-gray-700">GPay</span>
           </button>
-          <p className="text-center text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-relaxed px-4">
-            If the amount is not ₹{total}, please enter it manually.<br/>
-            Show your payment screenshot at the counter!
-          </p>
+          
+          <button 
+            onClick={() => finalizeAndRedirect('PhonePe')}
+            className="flex items-center justify-center space-x-2 bg-white border border-gray-100 p-4 rounded-2xl shadow-sm active:scale-95 transition-all hover:border-purple-200"
+          >
+            <i className="fas fa-mobile-alt text-lg text-purple-600"></i>
+            <span className="text-[10px] font-black uppercase tracking-widest text-gray-700">PhonePe</span>
+          </button>
         </div>
-      ) : (
-        <div className="text-center py-10 opacity-20">
-          <i className="fas fa-arrow-up text-2xl mb-2 animate-bounce"></i>
-          <p className="text-[10px] font-black uppercase tracking-widest">Select an app above</p>
-        </div>
-      )}
 
-      <div className="mt-12 text-center">
-        <button onClick={() => navigate('/cart')} className="text-[9px] font-black text-gray-300 uppercase tracking-widest hover:text-gray-900">
-           Cancel Transaction
+        <button 
+          onClick={copyUpiId}
+          className="w-full py-4 bg-gray-50 text-gray-400 border border-gray-100 rounded-2xl font-black text-[9px] uppercase tracking-widest hover:text-gray-900 transition-all flex items-center justify-center"
+        >
+          <i className="fas fa-copy mr-2"></i> Copy UPI ID: {UPI_ID}
         </button>
+      </div>
+
+      <div className="bg-orange-50 rounded-2xl p-5 border border-orange-100">
+        <div className="flex items-start space-x-3">
+          <i className="fas fa-exclamation-triangle text-orange-500 mt-1"></i>
+          <div>
+            <h4 className="text-[10px] font-black text-orange-800 uppercase tracking-widest mb-1">Important Instruction</h4>
+            <p className="text-[10px] text-orange-700 font-medium leading-relaxed">
+              If the app opens with ₹0, please manually type <strong className="text-orange-900">₹{total}</strong>. 
+              Show the successful payment screen at the counter to get your token.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );

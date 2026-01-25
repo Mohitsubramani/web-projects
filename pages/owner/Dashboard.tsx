@@ -60,6 +60,7 @@ const OwnerDashboard: React.FC<DashboardProps> = ({ orders, updateOrder, addOrde
         canvas.width = video.videoWidth;
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        // jsqr is usually a default export in modern setups
         const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "dontInvert" });
         
         if (code) {

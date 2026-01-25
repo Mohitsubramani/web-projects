@@ -51,8 +51,21 @@ const CustomerPayment: React.FC<PaymentProps> = ({ cart, onComplete, addOrder })
     if (isProcessing) return;
     setIsProcessing(true);
 
-    const orderId = `ord_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`;
-    const upiUrl = `upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(BUSINESS_NAME)}&am=${total.toFixed(2)}&cu=INR&tn=FoodOrder_${orderId}`;
+    const orderId = `ord${Date.now()}`; // Shorter ID for URL limits
+    const cleanUpiId = UPI_ID.trim();
+    
+    // Format amount: GPay/Paytm sometimes fail if .00 is trailing or if it's missing.
+    // Standard UPI am=149.00 is safest for most, but am=149 is better for GPay.
+    const amountStr = total.toString();
+
+    // The most robust UPI Intent string:
+    // pa: Payee Address
+    // pn: Payee Name
+    // am: Amount
+    // cu: Currency
+    // tn: Transaction Note (Short for compatibility)
+    // tr: Transaction Ref ID (CRITICAL for GPay/Paytm to prevent ₹0)
+    const upiUrl = `upi://pay?pa=${cleanUpiId}&pn=${encodeURIComponent(BUSINESS_NAME)}&am=${amountStr}&cu=INR&tr=${orderId}&tn=${encodeURIComponent('FoodOrder' + orderId.slice(-4))}`;
 
     const newOrder: Order = {
       id: orderId,
@@ -71,10 +84,22 @@ const CustomerPayment: React.FC<PaymentProps> = ({ cart, onComplete, addOrder })
 
     // 3. Complete and Redirect
     onComplete();
+
+    // Use a slight delay to ensure state updates, then redirect
     setTimeout(() => {
+      // Intent redirect
       window.location.href = upiUrl;
-      setTimeout(() => navigate('/orders'), 800);
+      
+      // Fallback for desktop or if app fails to open
+      setTimeout(() => {
+        navigate('/orders');
+      }, 1500);
     }, 100);
+  };
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(UPI_ID);
+    alert("UPI ID Copied! You can pay manually if the app doesn't open.");
   };
 
   return (
@@ -86,18 +111,18 @@ const CustomerPayment: React.FC<PaymentProps> = ({ cart, onComplete, addOrder })
 
       <div className="grid grid-cols-2 gap-3 mb-10 px-2">
         {[
-          { name: 'Google Pay', id: 'GPay', icon: 'fab fa-google-pay', color: 'blue' },
-          { name: 'PhonePe', id: 'PhonePe', icon: 'fas fa-mobile-alt', color: 'purple' },
-          { name: 'Paytm', id: 'Paytm', icon: 'fas fa-wallet', color: 'cyan' },
-          { name: 'Any UPI', id: 'Other', icon: 'fas fa-qrcode', color: 'orange' }
+          { name: 'Google Pay', id: 'GPay', icon: 'fab fa-google-pay' },
+          { name: 'PhonePe', id: 'PhonePe', icon: 'fas fa-mobile-alt' },
+          { name: 'Paytm', id: 'Paytm', icon: 'fas fa-wallet' },
+          { name: 'Any UPI', id: 'Other', icon: 'fas fa-qrcode' }
         ].map(method => (
           <button 
             key={method.id}
             disabled={isProcessing}
             onClick={() => handleUPILink(method.name)}
-            className="flex flex-col items-center justify-center bg-white p-6 md:p-8 rounded-[2rem] border-2 border-transparent hover:border-orange-500 hover:shadow-xl transition-all group disabled:opacity-50 active:scale-95"
+            className="flex flex-col items-center justify-center bg-white p-6 md:p-8 rounded-[2rem] border-2 border-transparent hover:border-orange-500 hover:shadow-xl transition-all group disabled:opacity-50 active:scale-95 shadow-sm"
           >
-            <div className={`w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-900 mb-4 transition-transform group-hover:scale-110`}>
+            <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-900 mb-4 transition-transform group-hover:scale-110">
               <i className={`${method.icon} text-2xl`}></i>
             </div>
             <span className="font-black text-gray-900 text-[10px] uppercase tracking-widest">{method.name}</span>
@@ -106,14 +131,20 @@ const CustomerPayment: React.FC<PaymentProps> = ({ cart, onComplete, addOrder })
       </div>
 
       <div className="bg-white rounded-[2rem] p-6 border border-gray-100 shadow-sm mx-2">
-        <div className="flex items-center space-x-3 mb-4">
-           <div className="w-8 h-8 bg-orange-50 rounded-lg flex items-center justify-center text-orange-600">
-             <i className="fas fa-info-circle text-sm"></i>
+        <div className="flex items-center justify-between mb-4">
+           <div className="flex items-center space-x-3">
+             <div className="w-8 h-8 bg-orange-50 rounded-lg flex items-center justify-center text-orange-600">
+               <i className="fas fa-info-circle text-sm"></i>
+             </div>
+             <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-900">Payable: ₹{total}</h4>
            </div>
-           <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-900">Total: ₹{total}</h4>
+           <button onClick={copyToClipboard} className="text-[8px] font-black uppercase text-blue-500 border border-blue-100 px-3 py-1 rounded-full">
+             Copy ID
+           </button>
         </div>
         <p className="text-[11px] text-gray-400 leading-relaxed font-medium">
-          Once you complete payment, your order details will be sent to the chef instantly. Please show the <strong>success screenshot</strong> and the <strong>Verification QR</strong> (on next page) at the counter.
+          If the app opens with ₹0, please manually enter <strong>₹{total}</strong>. 
+          After payment, show the <strong>success screenshot</strong> and the <strong>Verification QR</strong> at the counter.
         </p>
       </div>
 

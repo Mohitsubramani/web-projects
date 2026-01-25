@@ -1,2 +1,2 @@
 # webProjects
-Food Stsll  Ordering
+Food Stall  Ordering

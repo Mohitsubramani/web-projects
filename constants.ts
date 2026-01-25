@@ -1,4 +1,3 @@
-
 import { FoodItem } from './types';
 
 export const INITIAL_INVENTORY: FoodItem[] = [
@@ -40,15 +39,19 @@ export const INITIAL_INVENTORY: FoodItem[] = [
   }
 ];
 
-// PAYMENT CONFIG
-export const UPI_ID = 'SET_YOUR_UPI_ID_HERE@okaxis'; 
-export const BUSINESS_NAME = 'My Awesome Stall';
+/** 
+ * ACTION REQUIRED: Change these to your actual details! 
+ * UPI_ID: Your GPay/PhonePe ID (e.g., yourname@okaxis)
+ * BUSINESS_NAME: The name of your stall
+ */
+export const UPI_ID = 'mohitsubramani04@okhdfcbank'; 
+export const BUSINESS_NAME = 'FOOD STALL';
 
-// SECURITY CONFIG (Initial Defaults)
-export const OWNER_PIN = '123456';
-export const RECOVERY_PHONE = '9344830534';
-export const DEFAULT_SECURITY_QUESTION = "What is your favorite dish?";
-export const DEFAULT_SECURITY_ANSWER = "sustenance";
+// SECURITY CONFIG (Initial Defaults - Change in App)
+export const OWNER_PIN = '775300';
+export const RECOVERY_PHONE = '9384999473';
+export const DEFAULT_SECURITY_QUESTION = "Shameplant";
+export const DEFAULT_SECURITY_ANSWER = "renukadevi";
 
-// OPTIONAL: DISCORD WEBHOOK (Get from Channel Settings -> Integrations -> Webhooks)
-export const DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1464784599308566629/H5ZsPU92mDpwwKqBWBvWUq-cIo_DfReC0oasq9AnqiRlZnWZQc97ObgxcaL7gB-XKpms'; 
+// OPTIONAL: DISCORD WEBHOOK (Recommended for instant notifications)
+export const DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1464784599308566629/H5ZsPU92mDpwwKqBWBvWUq-cIo_DfReC0oasq9AnqiRlZnWZQc97ObgxcaL7gB-XKpms';

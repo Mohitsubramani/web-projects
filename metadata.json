@@ -1,0 +1,8 @@
+
+{
+  "name": "StallEase - Instant Food Ordering",
+  "description": "A streamlined QR-based food ordering and stall management system for vendors and customers.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}

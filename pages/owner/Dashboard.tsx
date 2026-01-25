@@ -1,11 +1,11 @@
-
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
+import jsQR from 'jsqr';
 import { Order, OrderStatus } from '../../types';
 
 interface DashboardProps {
   orders: Order[];
   updateOrder: (id: string, updates: Partial<Order>) => void;
-  addOrder: (order: Order) => void; // Need to add order from QR
+  addOrder: (order: Order) => void;
 }
 
 const OwnerDashboard: React.FC<DashboardProps> = ({ orders, updateOrder, addOrder }) => {
@@ -60,24 +60,30 @@ const OwnerDashboard: React.FC<DashboardProps> = ({ orders, updateOrder, addOrde
         canvas.width = video.videoWidth;
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        // @ts-ignore
         const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "dontInvert" });
         
         if (code) {
           try {
             const orderData = JSON.parse(code.data);
             if (orderData.id) {
-              // Map short key data back to Order type
               const newOrder: Order = {
                 id: orderData.id,
-                items: orderData.items.map((i:any) => ({ name: i.n, quantity: i.q, price: i.p, id: i.n, isAvailable: true, description: '', category: '' })),
+                items: orderData.items.map((i: any) => ({ 
+                  id: i.n,
+                  name: i.n, 
+                  quantity: i.q, 
+                  price: i.p, 
+                  isAvailable: true, 
+                  description: '', 
+                  category: '',
+                  image: ''
+                })),
                 totalPrice: orderData.t,
                 timestamp: orderData.ts,
                 paymentMethod: orderData.pm,
                 status: OrderStatus.PAID_PENDING_CONFIRMATION
               };
               
-              // Only add if it doesn't exist
               if (!orders.some(o => o.id === newOrder.id)) {
                 addOrder(newOrder);
                 alert("Order synced! Verify payment now.");
@@ -123,7 +129,6 @@ const OwnerDashboard: React.FC<DashboardProps> = ({ orders, updateOrder, addOrde
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* NEW ORDERS COLUMN */}
         <section className="lg:col-span-4">
           <div className="flex items-center justify-between mb-6 px-2">
             <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-500 flex items-center">
@@ -179,7 +184,6 @@ const OwnerDashboard: React.FC<DashboardProps> = ({ orders, updateOrder, addOrde
           </div>
         </section>
 
-        {/* KITCHEN QUEUE */}
         <section className="lg:col-span-8 space-y-10">
           <div>
             <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-500 flex items-center mb-6 px-2">
@@ -212,7 +216,7 @@ const OwnerDashboard: React.FC<DashboardProps> = ({ orders, updateOrder, addOrde
                   </button>
                 </div>
               ))}
-              {preparing.length === 0 && <p className="col-span-full py-16 text-center text-gray-200 font-black uppercase text-[8px] border-2 border-dashed border-gray-50 rounded-[2.5rem]">Kitchen Idle</p>}
+              {preparing.length === 0 && <p className="col-span-full py-16 text-center text-gray-200 font-black uppercase text-[8px] border-2 border-dashed border-gray-100 rounded-[2.5rem]">Kitchen Idle</p>}
             </div>
           </div>
 
@@ -253,7 +257,6 @@ const OwnerDashboard: React.FC<DashboardProps> = ({ orders, updateOrder, addOrde
         </section>
       </div>
 
-      {/* QR SCANNER MODAL */}
       {isScanning && (
         <div className="fixed inset-0 z-[200] bg-black flex flex-col items-center justify-center p-6">
           <div className="w-full max-w-sm flex flex-col items-center">
@@ -264,7 +267,6 @@ const OwnerDashboard: React.FC<DashboardProps> = ({ orders, updateOrder, addOrde
                <video ref={videoRef} className="w-full h-full object-cover" />
                <canvas ref={canvasRef} className="hidden" />
                
-               {/* Scanner Overlay UI */}
                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                   <div className="w-48 h-48 border-2 border-white/50 rounded-3xl relative">
                      <div className="absolute -top-1 -left-1 w-6 h-6 border-t-4 border-l-4 border-blue-500 rounded-tl-xl"></div>

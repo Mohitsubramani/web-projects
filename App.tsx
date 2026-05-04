@@ -10,7 +10,7 @@ import OwnerInventory from './pages/owner/Inventory';
 import OwnerHistory from './pages/owner/History';
 import { useStore } from './store';
 import { CartItem } from './types';
-import { BUSINESS_NAME } from './constants';
+import { BUSINESS_NAME, CONTACT_EMAIL, CONTACT_PHONE } from './constants';
 
 const Navigation = ({ cartCount, isAuthenticated, onLogout }: { cartCount: number, isAuthenticated: boolean, onLogout: () => void }) => {
   const location = useLocation();
@@ -38,6 +38,20 @@ const Navigation = ({ cartCount, isAuthenticated, onLogout }: { cartCount: numbe
             <span className="text-[8px] md:text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">Order Online • Pick Up Hot</span>
           </div>
         </Link>
+
+        <div className="hidden lg:flex items-center gap-3 rounded-full border border-gray-200 bg-white/90 px-4 py-2 shadow-sm hover:shadow-md transition-all">
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-50 text-orange-600">
+            <i className="fas fa-headset text-sm"></i>
+          </span>
+          <a href={`mailto:${CONTACT_EMAIL}`} className="flex flex-col text-left leading-tight hover:opacity-80 transition-opacity">
+            <span className="text-[9px] font-black uppercase tracking-[0.25em] text-gray-400">Contact</span>
+            <span className="text-xs font-bold text-gray-900">{CONTACT_EMAIL}</span>
+          </a>
+          <span className="h-8 w-px bg-gray-100" />
+          <a href={`tel:${CONTACT_PHONE}`} className="text-xs font-black text-gray-900 hover:opacity-80 transition-opacity">
+            {CONTACT_PHONE}
+          </a>
+        </div>
 
         <div className="hidden md:flex items-center space-x-1">
           {!isOwnerPath ? (
@@ -93,6 +107,23 @@ const Navigation = ({ cartCount, isAuthenticated, onLogout }: { cartCount: numbe
           </>
         )}
       </nav>
+
+      <div className="md:hidden fixed bottom-16 left-3 right-3 z-[59]">
+        <div className="rounded-2xl border border-orange-100 bg-white/95 backdrop-blur-md shadow-lg px-4 py-3 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="h-10 w-10 rounded-xl bg-orange-600 text-white flex items-center justify-center shadow-md">
+              <i className="fas fa-envelope-open-text"></i>
+            </div>
+            <div className="min-w-0">
+              <p className="text-[9px] font-black uppercase tracking-[0.25em] text-gray-400">Contact DREAMCRAFTER</p>
+              <p className="text-[10px] font-bold text-gray-700 truncate">{CONTACT_EMAIL}</p>
+            </div>
+          </div>
+          <a href={`tel:${CONTACT_PHONE}`} className="shrink-0 rounded-full bg-gray-900 px-3 py-2 text-[9px] font-black uppercase tracking-widest text-white">
+            {CONTACT_PHONE}
+          </a>
+        </div>
+      </div>
     </>
   );
 };

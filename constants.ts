@@ -43,9 +43,14 @@ export const INITIAL_INVENTORY: FoodItem[] = [
  * ACTION REQUIRED: Change these to your actual details! 
  * UPI_ID: Your GPay/PhonePe ID (e.g., yourname@okaxis)
  * BUSINESS_NAME: The name of your stall
+ * CONTACT_EMAIL: Use a real support email for Razorpay verification
  */
 export const UPI_ID = 'mohitsubramani04@okhdfcbank'; 
-export const BUSINESS_NAME = 'FOOD STALL';
+export const BUSINESS_NAME = 'DREAMCRAFTER';
+export const APP_NAME = 'DREAMCRAFTER';
+export const APP_DESCRIPTION = 'Streamlined QR-based food ordering system.';
+export const CONTACT_EMAIL = 'dreamerzcodex@gmail.com';
+export const CONTACT_PHONE = '9344830534';
 
 // SECURITY CONFIG (Initial Defaults - Change in App)
 export const OWNER_PIN = '775300';

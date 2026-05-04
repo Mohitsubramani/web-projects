@@ -10,7 +10,7 @@ import OwnerInventory from './pages/owner/Inventory';
 import OwnerHistory from './pages/owner/History';
 import { useStore } from './store';
 import { CartItem } from './types';
-import { BUSINESS_NAME, CONTACT_EMAIL, CONTACT_PHONE } from './constants';
+import { BUSINESS_NAME, CONTACT_EMAIL, CONTACT_PHONE, APP_DESCRIPTION } from './constants';
 
 const Navigation = ({ cartCount, isAuthenticated, onLogout }: { cartCount: number, isAuthenticated: boolean, onLogout: () => void }) => {
   const location = useLocation();
@@ -419,8 +419,12 @@ const App: React.FC = () => {
         </main>
 
         <footer className="py-12 border-t border-gray-100 bg-white">
-          <div className="max-w-7xl mx-auto px-8 flex flex-col md:flex-row justify-between items-center text-gray-400 gap-4">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-center md:text-left">© {new Date().getFullYear()} {BUSINESS_NAME} • Digital Ordering System</p>
+          <div className="max-w-7xl mx-auto px-8 flex flex-col items-center text-gray-400 gap-4">
+            <div className="max-w-2xl rounded-3xl border border-gray-100 bg-gray-50/80 px-5 py-4 text-center shadow-sm">
+              <p className="text-[9px] font-black uppercase tracking-[0.3em] text-gray-500 mb-2">About / Description</p>
+              <p className="text-sm font-medium text-gray-700 leading-relaxed">{APP_DESCRIPTION}</p>
+            </div>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-center">© {new Date().getFullYear()} {BUSINESS_NAME} • Digital Ordering System</p>
           </div>
         </footer>
       </div>

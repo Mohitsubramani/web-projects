@@ -405,8 +405,22 @@ const App: React.FC = () => {
     <HashRouter>
       <div className="min-h-screen bg-[#f8f9fa] text-gray-900 flex flex-col">
         <Navigation cartCount={cartCount} isAuthenticated={isAuthenticated} onLogout={handleLogout} />
+        <div className="fixed top-16 left-0 right-0 z-[55] px-4 sm:px-6 lg:px-8 pointer-events-none">
+          <div className="max-w-7xl mx-auto">
+            <div className="pointer-events-auto mt-3 rounded-2xl border border-orange-100 bg-white/95 backdrop-blur-md shadow-sm px-4 py-3 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-[0.3em] text-orange-500">About / Description</p>
+                <p className="text-sm font-semibold text-gray-800 leading-relaxed">{APP_DESCRIPTION}</p>
+              </div>
+              <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-400">
+                <span className="inline-flex h-2 w-2 rounded-full bg-orange-500"></span>
+                Live on main page
+              </div>
+            </div>
+          </div>
+        </div>
         
-        <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-24 md:pb-12">
+        <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-36 pb-24 md:pb-12">
           <Routes>
             <Route path="/" element={<CustomerMenu inventory={store.inventory} cart={cart} onAddToCart={addToCart} onUpdateQuantity={updateQuantity} onRemove={removeFromCart} />} />
             <Route path="/cart" element={<CustomerCart cart={cart} onUpdateQuantity={updateQuantity} onRemove={removeFromCart} />} />
@@ -420,10 +434,6 @@ const App: React.FC = () => {
 
         <footer className="py-12 border-t border-gray-100 bg-white">
           <div className="max-w-7xl mx-auto px-8 flex flex-col items-center text-gray-400 gap-4">
-            <div className="max-w-2xl rounded-3xl border border-gray-100 bg-gray-50/80 px-5 py-4 text-center shadow-sm">
-              <p className="text-[9px] font-black uppercase tracking-[0.3em] text-gray-500 mb-2">About / Description</p>
-              <p className="text-sm font-medium text-gray-700 leading-relaxed">{APP_DESCRIPTION}</p>
-            </div>
             <p className="text-[10px] font-bold uppercase tracking-widest text-center">© {new Date().getFullYear()} {BUSINESS_NAME} • Digital Ordering System</p>
           </div>
         </footer>

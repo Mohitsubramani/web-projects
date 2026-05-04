@@ -48,7 +48,7 @@ export const INITIAL_INVENTORY: FoodItem[] = [
 export const UPI_ID = 'mohitsubramani04@okhdfcbank'; 
 export const BUSINESS_NAME = 'DREAMCRAFTER';
 export const APP_NAME = 'DREAMCRAFTER';
-export const APP_DESCRIPTION = 'Streamlined QR-based food ordering system.';
+export const APP_DESCRIPTION = 'DreamCrafter is a digital platform for ordering food/services online.';
 export const CONTACT_EMAIL = 'dreamerzcodex@gmail.com';
 export const CONTACT_PHONE = '9344830534';
 

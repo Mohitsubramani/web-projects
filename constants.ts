@@ -46,11 +46,11 @@ export const INITIAL_INVENTORY: FoodItem[] = [
  * CONTACT_EMAIL: Use a real support email for Razorpay verification
  */
 export const UPI_ID = 'mohitsubramani04@okhdfcbank'; 
-export const BUSINESS_NAME = 'DREAMCRAFTER';
-export const APP_NAME = 'DREAMCRAFTER';
+export const BUSINESS_NAME = 'Surya N';
+export const APP_NAME = 'Surya N';
 export const APP_DESCRIPTION = 'DreamCrafter is a digital platform for ordering food/services online.';
-export const CONTACT_EMAIL = 'dreamerzcodex@gmail.com';
-export const CONTACT_PHONE = '9344830534';
+export const CONTACT_EMAIL = 'nbalasurya12345@gmail.com';
+export const CONTACT_PHONE = '8778620977';
 
 // SECURITY CONFIG (Initial Defaults - Change in App)
 export const OWNER_PIN = '775300';
